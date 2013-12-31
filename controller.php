@@ -6,7 +6,7 @@ class BestSuiteExpansionKitPackage extends Package {
 
 	protected $pkgHandle = 'best_suite_expansion_kit';
 	protected $appVersionRequired = '5.6.1.2';
-	protected $pkgVersion = '0.0.1';
+	protected $pkgVersion = '0.0.2';
 
 	public function getPackageDescription() {
 		return t("Learn to create applications that utilize Best Suite : Core");
@@ -28,7 +28,7 @@ class BestSuiteExpansionKitPackage extends Package {
 			if ($handle === "dashboard_page_managers") {
 				$haveDPM = 1;
 				$pkgVersion = $_pkg->getPackageVersion();
-				if (version_compare($pkgVersion, "1.2.3") > 0) {
+				if (version_compare($pkgVersion, "1.2.3") >= 0) {
 					$dpmUpToDate = 1;
 				}
 			}
@@ -48,35 +48,28 @@ class BestSuiteExpansionKitPackage extends Package {
 				$message .= " - " . t("You must have Best Suite - Core installed");
 			} else {
 				if (!$dpmUpToDate) {
-					$message .= " - " . t("Best Suite - Core must be version 1.0.13 or higher");
+					$message .= " - " . t("Best Suite - Core must be version 1.2.3 or higher");
 				}
-			}
-			if (!$haveO) {
-				$message .= " - " . t("You must have Oembed installed");
 			}
 			throw new Exception($message);
 		}
+	}
+	
+	public function uninstall(){
+		$pkgID = $this->getPackageID();
+		$db = Loader::db();
+		$db->execute("DELETE FROM BestSuiteInstalledPackages WHERE pkgID = ?", array($pkgID));
+		$sampleManager = Page::getByPath("/dashboard/best_suite/sample");
+		if ($sampleManager && is_a($sampleManager, "Page")){
+			$sampleManager->delete();
+		}
+		parent::uninstall();
 	}
 
 	/**
 	 * @var $pkg Package
 	 * @var $keepInternal bool */
 	private function installPageTypes($pkg, $keepInternal = 0) {
-
-		/*
-		 *  We always want to keep the page for writing internal no matter
-		 * what. Keep in mind, if you are not doing a custom view or controller
-		 * then you don't actually need to install this page type, you can 
-		 * just use the built in one from the core.
-		 */
-		$writeSamplePage = CollectionType::getByHandle('bs_write_sample_page');
-		if (!is_object($writeSamplePage)) {
-			$data = array(
-				'ctHandle' => 'bs_write_sample_page',
-				'ctName' => t('Write Sample Pages'),
-				'ctIsInternal' => 1);
-			$writeSamplePage = CollectionType::add($data, $pkg);
-		}
 
 		/*
 		 * Now to install the actual page type that we will be editing.
@@ -90,87 +83,54 @@ class BestSuiteExpansionKitPackage extends Package {
 			$sample = CollectionType::add($data, $pkg);
 		}
 	}
-	
+
 	private function installPages($pkg) {
-		
+
 		$pkgID = $pkg->getPackageID();
-
-		/* We only need to do this if we are installing a custom editor.
-		 * Otherwise, the built in is all you need. 
-		 */
-		$composer = Page::getByPath('/dashboard/composer');
-		$writeSP = CollectionType::getByHandle('bs_write_sample_page');
-
-		$data = array(
-		    'cHandle' => "write-sample",
-		    'cName' => t("Write a Sample Page"));
-		$writeSP = $composer->add($writeSP, $data);
-
-		$exNav = CollectionAttributeKey::getByHandle('exclude_nav');
-		if ($exNav && is_a($exNav, "CollectionAttributeKey")) {
-			$writeSP->setAttribute('exclude_nav', 1);
-		}
-
-		$exSI = CollectionAttributeKey::getByHandle('exclude_search_index');
-		if ($exSI && is_a($exSI, "CollectionAttributeKey")) {
-			$writeSP->setAttribute('exclude_search_index', 1);
-		}
-
-		$exPL = CollectionAttributeKey::getByHandle('exclude_page_list');
-		if ($exPL && is_a($exPL, "CollectionAttributeKey")) {
-			$writeSP->setAttribute('exclude_page_list', 1);
-		}
-		
-		$icon = CollectionAttributeKey::getByHandle('icon_dashboard');
-		if ($icon && is_a($icon, "CollectionAttributeKey")) {
-			$writeSP->setAttribute('icon_dashboard', 'icon-pencil');
-		}
 
 		/* This is the page that will do the listing / searching */
 		$bestSuiteParent = Page::getByPath("/dashboard/best_suite");
 		$pageManagerCT = CollectionType::getByHandle("dashboard_page_manager");
 
 		$data = array(
-		    'cHandle' => "sample",
-		    'cName' => t("Manage Sample Pages"));
+			'cHandle' => "sample",
+			'cName' => t("Manage Sample Pages"));
 		$samplePageManager = $bestSuiteParent->add($pageManagerCT, $data);
-		
+
 		$samplePageManager->setAttribute("dpm_page_type_handle", "bs_sample");
-		
 	}
-	
-	private function installPageAttributes($pkg){
-		
+
+	private function installPageAttributes($pkg) {
+
 		$cakc = AttributeKeyCategory::getByHandle('collection');
 		$cakc->setAllowAttributeSets(AttributeKeyCategory::ASET_ALLOW_SINGLE);
 		$bpa = $cakc->addSet('sample_page_attributes', t('Sample Page Attributes'), $pkg);
-		
+
 		$bs_sample_category = CollectionAttributeKey::getByHandle('bs_sample_category');
-		
+
 		if (!$bs_sample_category instanceof CollectionAttributeKey) {
 			$bs_sample_category = CollectionAttributeKey::add('select', array(
-					  'akHandle' => 'bs_sample_category',
-					  'akName' => t('Select Name'),
-					  'akIsSearchable' => true,
-					  'akIsSearchableIndexed' => 1,
-					  'akSelectAllowMultipleValues' => true,
-					  'akSelectAllowOtherValues' => true,
-					  'akSelectOptionDisplayOrder' => 'alpha_asc'), $pkg)->setAttributeSet($bpa);
+					'akHandle' => 'bs_sample_category',
+					'akName' => t('Sample Page Category'),
+					'akIsSearchable' => true,
+					'akIsSearchableIndexed' => 1,
+					'akSelectAllowMultipleValues' => true,
+					'akSelectAllowOtherValues' => true,
+					'akSelectOptionDisplayOrder' => 'alpha_asc'), $pkg)->setAttributeSet($bpa);
 			$ak = CollectionAttributeKey::getByHandle('bs_sample_category');
 			SelectAttributeTypeOption::add($ak, "Time Saving");
 			SelectAttributeTypeOption::add($ak, "Programming");
 			SelectAttributeTypeOption::add($ak, "Rapid Development");
 			SelectAttributeTypeOption::add($ak, "Page Management");
 			SelectAttributeTypeOption::add($ak, "DRY");
-			
-		} 
+		}
 	}
-	
+
 	private function registerWithBestSuiteCore($pkg) {
-		
+
 		$bscH = Loader::helper("best_suite_core", "dashboard_page_managers");
 		$ctID = CollectionType::getByHandle("bs_sample")->getCollectionTypeID();
-		
+
 		/**
 		 * This is where we let the core system know what we need it to do with
 		 * our package. The options are
@@ -187,21 +147,22 @@ class BestSuiteExpansionKitPackage extends Package {
 		 * @customSearchInterfaceFolderName = The container directory that holds
 		 * the search elements. This is relative to package_root/elements/
 		 */
-		
 		$data = array(
-		    "pkgID" => $pkg->getPackageID(),
-		    "ctID" => $ctID,
-		    "hasCustomEditPage" => 0,
-		    "hasCustomSearchInterface" => 0
+			"pkgID" => $pkg->getPackageID(),
+			"ctID" => $ctID,
+			"hasCustomEditPage" => 0,
+			"hasCustomEditPageCID" => 0,
+			"hasCustomSearchInterface" => 0,
+			"customSearchInterfaceFolderName" => ""
 		);
 		$bscH->registerCollectionTypeDetails($data);
 	}
 
 	private function setupComposer($pkg) {
-		
+
 		$niSample = CollectionType::getByHandle("bs_sample");
-		$niSampleMCT = $niSample->getMasterTemplate();
-		
+		$niMC = $niSample->getMasterTemplate();
+
 		/*
 		 * There are three options for publishing location. 
 		 * 
@@ -218,7 +179,7 @@ class BestSuiteExpansionKitPackage extends Package {
 		 * Pass in the full Page object, not just the ID
 		 */
 //		$niSample->saveComposerPublishTargetPage($c);
-		
+
 		/*
 		 * These are the attributes that will be editable in your application.
 		 * If you have custom attributes then you can set them up here as well.
@@ -228,25 +189,20 @@ class BestSuiteExpansionKitPackage extends Package {
 		 * For this sample, we're just using one that's installed with the core
 		 */
 		$sampleAtts = array();
-		$metaKeywords = CollectionAttributeKey::getByHandle("bs_dsample_category");
-		if ($metaKeywords && is_a($metaKeywords, "CollectionAttributeKey")){
-			$sampleAtts[] = $metaKeywordsID = $metaKeywords->getAttributeKeyID();
+		$bsSampleCategory = CollectionAttributeKey::getByHandle("bs_sample_category");
+		if ($bsSampleCategory && is_a($bsSampleCategory, "CollectionAttributeKey")) {
+			$sampleAtts[] = $bsSampleCategoryID = $bsSampleCategory->getAttributeKeyID();
 		}
-		
+
 		// Now they're added to composer
 		$niSample->saveComposerAttributeKeys($sampleAtts);
 
-		
-		$sample= CollectionType::getByHandle("bs_sample");
-		$niMC = $sample->getMasterTemplate();
-		$bt = BlockType::getByHandle('content');
-
 		// Page Content
-		
 		// This adds the block to the master template
+		$bt = BlockType::getByHandle('content');
 		$data = array('content' => "");
 		$sampleText = $niMC->addBlock($bt, 'Main', $data);
-		
+
 		/*
 		 * And now the composer data. These will be passed in to the block's
 		 * updateBlockInformation function, as well.
@@ -263,10 +219,10 @@ class BestSuiteExpansionKitPackage extends Package {
 		 * @cbFilename = The name that will appear in composer
 		 */
 		$composerData = array(
-		    "bName" => "",
-		    "bFileName" => "Sample Text",
-		    "bIncludeInComposer" => 1,
-		    "cbFilename" => t("Sample Text")
+			"bName" => "",
+			"bFileName" => "Sample Text",
+			"bIncludeInComposer" => 1,
+			"cbFilename" => t("Sample Text")
 		);
 		$sampleText->updateBlockComposerSettings($composerData);
 
@@ -282,17 +238,16 @@ class BestSuiteExpansionKitPackage extends Package {
 		 * to avoid accidentally doing that.
 		 */
 		$composerItems = array();
-
-		$obj = new stdClass();
-		$obj->akID = $metaKeywordsID;
-		$composerItems[] = $obj;
-
+		
 		$obj = new stdClass();
 		$obj->bID = $sampleText->getBlockID();
 		$composerItems[] = $obj;
 
-		$sample->saveComposerContentItemOrder($composerItems);
-		
+		$obj = new stdClass();
+		$obj->akID = $bsSampleCategoryID;
+		$composerItems[] = $obj;
+
+		$niSample->saveComposerContentItemOrder($composerItems);
 	}
 
 }
