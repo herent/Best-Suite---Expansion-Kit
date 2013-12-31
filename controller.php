@@ -6,7 +6,7 @@ class BestSuiteExpansionKitPackage extends Package {
 
 	protected $pkgHandle = 'best_suite_expansion_kit';
 	protected $appVersionRequired = '5.6.1.2';
-	protected $pkgVersion = '0.0.1';
+	protected $pkgVersion = '0.0.2';
 
 	public function getPackageDescription() {
 		return t("Learn to create applications that utilize Best Suite : Core");
@@ -28,7 +28,7 @@ class BestSuiteExpansionKitPackage extends Package {
 			if ($handle === "dashboard_page_managers") {
 				$haveDPM = 1;
 				$pkgVersion = $_pkg->getPackageVersion();
-				if (version_compare($pkgVersion, "1.2.3") > 0) {
+				if (version_compare($pkgVersion, "1.2.3") >= 0) {
 					$dpmUpToDate = 1;
 				}
 			}
@@ -47,11 +47,8 @@ class BestSuiteExpansionKitPackage extends Package {
 				$message .= " - " . t("You must have Best Suite - Core installed");
 			} else {
 				if (!$dpmUpToDate) {
-					$message .= " - " . t("Best Suite - Core must be version 1.0.13 or higher");
+					$message .= " - " . t("Best Suite - Core must be version 1.2.3 or higher");
 				}
-			}
-			if (!$haveO) {
-				$message .= " - " . t("You must have Oembed installed");
 			}
 			throw new Exception($message);
 		}
