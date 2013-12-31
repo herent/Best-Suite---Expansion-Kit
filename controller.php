@@ -38,6 +38,7 @@ class BestSuiteExpansionKitPackage extends Package {
 			$pkg = parent::install();
 			$this->installPageTypes($pkg, $installData['keepInternal']);
 			$this->installPages($pkg);
+			$this->installPageAttributes($pkg);
 			$this->setupComposer($pkg);
 			$this->registerWithBestSuiteCore($pkg);
 		} else {
@@ -138,10 +139,36 @@ class BestSuiteExpansionKitPackage extends Package {
 		
 	}
 	
-	private function registerWithBestSuiteCore($pkg) {
-		$bscH = Loader::helper("best_suite_core", "dashboard_page_managers");
+	private function installPageAttributes($pkg){
 		
-		$sampleEditPage = Page::getByPath("/dashboard/composer/write-sample")->getCollectionID();
+		$cakc = AttributeKeyCategory::getByHandle('collection');
+		$cakc->setAllowAttributeSets(AttributeKeyCategory::ASET_ALLOW_SINGLE);
+		$bpa = $cakc->addSet('sample_page_attributes', t('Sample Page Attributes'), $pkg);
+		
+		$bs_sample_category = CollectionAttributeKey::getByHandle('bs_sample_category');
+		
+		if (!$bs_sample_category instanceof CollectionAttributeKey) {
+			$bs_sample_category = CollectionAttributeKey::add('select', array(
+					  'akHandle' => 'bs_sample_category',
+					  'akName' => t('Select Name'),
+					  'akIsSearchable' => true,
+					  'akIsSearchableIndexed' => 1,
+					  'akSelectAllowMultipleValues' => true,
+					  'akSelectAllowOtherValues' => true,
+					  'akSelectOptionDisplayOrder' => 'alpha_asc'), $pkg)->setAttributeSet($bpa);
+			$ak = CollectionAttributeKey::getByHandle('bs_sample_category');
+			SelectAttributeTypeOption::add($ak, "Time Saving");
+			SelectAttributeTypeOption::add($ak, "Programming");
+			SelectAttributeTypeOption::add($ak, "Rapid Development");
+			SelectAttributeTypeOption::add($ak, "Page Management");
+			SelectAttributeTypeOption::add($ak, "DRY");
+			
+		} 
+	}
+	
+	private function registerWithBestSuiteCore($pkg) {
+		
+		$bscH = Loader::helper("best_suite_core", "dashboard_page_managers");
 		$ctID = CollectionType::getByHandle("bs_sample")->getCollectionTypeID();
 		
 		/**
@@ -164,10 +191,8 @@ class BestSuiteExpansionKitPackage extends Package {
 		$data = array(
 		    "pkgID" => $pkg->getPackageID(),
 		    "ctID" => $ctID,
-		    "hasCustomEditPage" => 1,
-		    "customEditPageCID" => $sampleEditPage,
-		    "hasCustomSearchInterface" => 1,
-		    "customSearchInterfaceFolderName" => "bs_expansion_kit"
+		    "hasCustomEditPage" => 0,
+		    "hasCustomSearchInterface" => 0
 		);
 		$bscH->registerCollectionTypeDetails($data);
 	}
@@ -203,7 +228,7 @@ class BestSuiteExpansionKitPackage extends Package {
 		 * For this sample, we're just using one that's installed with the core
 		 */
 		$sampleAtts = array();
-		$metaKeywords = CollectionAttributeKey::getByHandle("meta_keywords");
+		$metaKeywords = CollectionAttributeKey::getByHandle("bs_dsample_category");
 		if ($metaKeywords && is_a($metaKeywords, "CollectionAttributeKey")){
 			$sampleAtts[] = $metaKeywordsID = $metaKeywords->getAttributeKeyID();
 		}
