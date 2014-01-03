@@ -1,5 +1,4 @@
 <?php
-
 defined('C5_EXECUTE') or die("Access Denied.");
 
 class BsSamplePageTypeController extends Controller {
@@ -14,26 +13,39 @@ class BsSamplePageTypeController extends Controller {
 		 * uncomment the stuff below. You do have to hard code the link back to
 		 * the listing interface, so be careful about updating that.
 		 */
-
-		/*
-		  $c = Page::getCurrentPage();
-		  $myCT = CollectionType::getByHandle($c->getCollectionTypeHandle());
-		  if ($myCT->isCollectionTypeInternal()){
-		  if ($c->isMasterCollection()) {
-		  ob_start();?>
-		  <script type="text/javascript">
-		  $(document).ready(function() {
-		  $("#ccm-main-nav a.ccm-icon-back")
-		  .attr("href", "<?php echo View::url('/dashboard/best_suite/sample') ?>")
-		  .text("<?php echo t("Back to Sample"); ?>");
-		  });
-		  </script>
-		  <?php
-		  $changeHeaderScript = ob_get_clean();
-		  $this->addFooterItem($changeHeaderScript);
-		  }
-		  }
-		 */
+		$c = Page::getCurrentPage();
+		$myCT = CollectionType::getByHandle($c->getCollectionTypeHandle());
+		if ($myCT->isCollectionTypeInternal()) {
+			if ($c->isMasterCollection()) {
+				ob_start();
+				?>
+				<script type="text/javascript">
+					$(document).ready(function() {
+						$("#ccm-main-nav a.ccm-icon-back")
+							   .attr("href", "<?php echo View::url('/dashboard/best_suite/sample') ?>")
+							   .text("<?php echo t("Back to Sample"); ?>");
+					});
+				</script>
+				<?php
+				$changeHeaderScript = ob_get_clean();
+				$this->addFooterItem($changeHeaderScript);
+			} else {
+				$c = Page::getCurrentPage();
+				$cp = new Permissions($c);
+				if ($cp->canViewToolbar()){
+					ob_start();
+					?>
+					<script type="text/javascript">
+						$(document).ready(function() {
+							$("#ccm-main-nav").remove();
+						});
+					</script>
+					<?php
+					$changeHeaderScript = ob_get_clean();
+					$this->addFooterItem($changeHeaderScript);
+				}
+			}
+		}
 	}
 
 	/*
@@ -49,8 +61,10 @@ class BsSamplePageTypeController extends Controller {
 	 * @var $data Array */
 
 	public function validateComposer($data = false) {
+		
 		$e = Loader::helper("validation/error");
-
+		$cobj = Page::getCurrentPage();
+		
 		if (!$data) {
 			return true;
 		} else {
@@ -63,18 +77,22 @@ class BsSamplePageTypeController extends Controller {
 			}
 
 			/*
-			 * And now checking the value of an attribute key in the form
-			 * If you have to update multiples, make an array of keys and 
-			 * loop over it.
+			 * Select attributes and file attributes don't appear to validate
+			 * properly due to some core bugs. So I'm manually checking them
+			 * here, it's a bit hacky, but it works
 			 */
-			$metaKeywords = CollectionAttributeKey::getByHandle("meta_keywords");
-			$e1 = $metaKeywords->validateAttributeForm();
-			if ($e1 == false) {
-				$e->add(t('The field "%s" is required', tc('AttributeKeyName', $metaKeywords->getAttributeKeyName())));
-			} else if ($e1 instanceof ValidationErrorHelper) {
-				$e->add($e1);
+			
+			$thumbAttAkID = CollectionAttributeKey::getByHandle("bs_sample_thumbnail")->getAttributeKeyID();
+			if (!intval($data['akID'][$thumbAttAkID]['value'])>0){
+				$e->add(t("Please choose a thumbnail."));
 			}
 
+			$categoryAkID = CollectionAttributeKey::getByHandle("bs_sample_category")->getAttributeKeyID();
+			if (!count($data['akID'][$categoryAkID]['atSelectOptionID'])>0 && !count($data['akID'][$categoryAkID]['atSelectNewOption'])>0){
+				$e->add(t("Please select a category."));
+			}
+			
+			
 			/*
 			 * Validating blocks is a bit different. It might be possible to 
 			 * just call the validate function on the block if it exists. 
@@ -85,20 +103,19 @@ class BsSamplePageTypeController extends Controller {
 			$bscHelper->loadCollectionComposerItems($cobj);
 			$block = $bscHelper->getNamedBlock("Sample Text");
 			/* We only want to validate if the block was actually found. */
-			if ($block && is_a($block, "Block")){
+			if ($block && is_a($block, "Block")) {
 				$bID = $block->getBlockID();
-				
+
 				/* Here we are just checking the data array (probably $_POST 
 				 * explicitly. If you know what exactly you need, that's OK,
 				 * but it is probably better to call the validate function 
 				 * on the block controller if it exists. 
 				 */
-				
-				/*
-				$content = $data['_bf']['BLOCK_' . $contentBlockBID . "_" . $cID]['content'];
+
+				$content = $data['_bf']['BLOCK_' . $bID . "_" . $cID]['content'];
 				if (!strlen($content) > 0) {
-					$e->add(t("Please include some Content."));
-				}*/
+					$e->add(t("Please include some content."));
+				}
 
 				/* If there's a validate function on the block's controller,
 				 * then you can do this. You will have to pay attention to 
@@ -115,15 +132,16 @@ class BsSamplePageTypeController extends Controller {
 				 * 
 				 * If anyone has a solution, please email me at 
 				 * jeremy.werst@gmail.com 
-				 */
 
-				$blockController = Loader::controller($block);
-				if (method_exists($blockController, "validate")){
-					$blockData = $content = $data['_bf']['BLOCK_' . $bID . "_" . $cID];
-					$blockController->validate($blockData);
-				}
+
+				  $blockController = Loader::controller($block);
+				  if (method_exists($blockController, "validate")){
+				  $blockData = $content = $data['_bf']['BLOCK_' . $bID . "_" . $cID];
+				  $blockController->validate($blockData);
+				  }
+				 */
 			}
-			
+
 			if ($e->has()) {
 				return $e;
 			} else {

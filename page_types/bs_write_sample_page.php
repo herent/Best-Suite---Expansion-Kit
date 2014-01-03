@@ -108,17 +108,16 @@ if (isset($entry)) {
 						</div>
 					<?php } 
 					/* End top-level page items */
-					
-					/* Now to output our extra attribute in a different place
-					 * Instead of just looping, use this syntax
-					 */
-					$bscHelper->outputAttributeKeyComposerEditForm("meta_keywords", $entry);
 					?>
 				</div>
 				<div id="ccm-tab-content-content" class="pane form-horizontal" style="display: none;">
 					<?php 
-					/* Blocks are also pretty simple to output */
+					/* Blocks are pretty simple to output */
 					$bscHelper->outputNamedBlockComposerEditForm("Sample Text", $entry);
+					/* Now to output our extra attribute in a different place
+					 */
+					$bscHelper->outputAttributeKeyComposerEditForm("bs_sample_thumbnail", $entry);
+					$bscHelper->outputAttributeKeyComposerEditForm("bs_sample_category", $entry);
 					?>
 				</div>
 			</div>

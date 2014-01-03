@@ -36,6 +36,8 @@ class BestSuiteExpansionKitPackage extends Package {
 		if ($haveDPM && $dpmUpToDate) {
 			// We're good to go
 			$pkg = parent::install();
+			$this->installBlocks($pkg);
+			$this->installPageAttributes($pkg);
 			$this->installPageTypes($pkg, $installData['keepInternal']);
 			$this->installPages($pkg);
 			$this->setupComposer($pkg);
@@ -52,19 +54,81 @@ class BestSuiteExpansionKitPackage extends Package {
 			}
 			throw new Exception($message);
 		}
-	}
+ 	}
 
-	public function uninstall(){
+	public function uninstall() {
 		$pkgID = $this->getPackageID();
 		$db = Loader::db();
 		$db->execute("DELETE FROM BestSuiteInstalledPackages WHERE pkgID = ?", array($pkgID));
+		
 		$sampleManager = Page::getByPath("/dashboard/best_suite/sample");
-		if ($sampleManager && is_a($sampleManager, "Page")){
+		if ($sampleManager && is_a($sampleManager, "Page")) {
 			$sampleManager->delete();
 		}
+		
+		$writeSample = Page::getByPath("/dashboard/composer/write-sample");
+		if ($writeSample && is_a($writeSample, "Page")) {
+			$writeSample->delete();
+		}
+		
 		parent::uninstall();
 	}
+
+	/*
+	 * var $pkg Package
+	 */
+	private function installBlocks($pkg) {
+          $bt = BlockType::getByHandle('bs_sample_pages_list');
+          if (!$bt || !is_object($bt)){
+               BlockType::installBlockTypeFromPackage('bs_sample_pages_list', $pkg);
+          } else {
+			// the block already exists, so we want
+			// to update it to use the block from our package
+			// this might not be OK for marketplace stuff if
+			// you are modifying other packages or the core
+			Loader::db()->execute('update BlockTypes set pkgID = ? where btID = ?', array($pkg->pkgID, $bt->getBlockTypeID()));
+			
+		}
+	}
 	
+	/*
+	 * var $pkg Package
+	 */
+	private function installPageAttributes($pkg) {
+
+		$cakc = AttributeKeyCategory::getByHandle('collection');
+		$cakc->setAllowAttributeSets(AttributeKeyCategory::ASET_ALLOW_SINGLE);
+		$bpa = $cakc->addSet('sample_page_attributes', t('Sample Page Attributes'), $pkg);
+
+		$bs_sample_category = CollectionAttributeKey::getByHandle('bs_sample_category');
+
+		if (!$bs_sample_category instanceof CollectionAttributeKey) {
+			$bs_sample_category = CollectionAttributeKey::add('select', array(
+					'akHandle' => 'bs_sample_category',
+					'akName' => t('Sample Page Category'),
+					'akIsSearchable' => true,
+					'akIsSearchableIndexed' => 1,
+					'akSelectAllowMultipleValues' => true,
+					'akSelectAllowOtherValues' => true,
+					'akSelectOptionDisplayOrder' => 'alpha_asc'), $pkg)->setAttributeSet($bpa);
+			$ak = CollectionAttributeKey::getByHandle('bs_sample_category');
+			SelectAttributeTypeOption::add($ak, "Time Saving");
+			SelectAttributeTypeOption::add($ak, "Programming");
+			SelectAttributeTypeOption::add($ak, "Rapid Development");
+			SelectAttributeTypeOption::add($ak, "Page Management");
+			SelectAttributeTypeOption::add($ak, "DRY");
+		}
+
+
+		$bs_sample_thumbnail = CollectionAttributeKey::getByHandle('bs_sample_thumbnail');
+		if (!$bs_sample_thumbnail instanceof CollectionAttributeKey) {
+			$bs_sample_thumbnail = CollectionAttributeKey::add("image_file", array(
+					'akHandle' => 'bs_sample_thumbnail',
+					'akName' => t('Thumbnail'),
+					'akIsSearchable' => false), $pkg)->setAttributeSet($bpa);
+		}
+	}
+
 	/**
 	 * @var $pkg Package
 	 * @var $keepInternal bool */
@@ -88,18 +152,52 @@ class BestSuiteExpansionKitPackage extends Package {
 		/*
 		 * Now to install the actual page type that we will be editing.
 		 */
-		$sample = CollectionType::getByHandle('bs_sample');
-		if (!is_object($sample)) {
+		$sampleCT = CollectionType::getByHandle('bs_sample');
+		if (!is_object($sampleCT)) {
 			$data = array(
 				'ctHandle' => 'bs_sample',
 				'ctName' => t('Sample'),
 				'ctIsInternal' => $keepInternal);
-			$sample = CollectionType::add($data, $pkg);
+			$sampleCT = CollectionType::add($data, $pkg);
 		}
-	}
-	
-	private function installPages($pkg) {
+		CacheLocal::flush();
+		/*
+		 * And a page type to publish our pages under. 
+		 * We're not keeping it internal because we need to be able to add them
+		 * from the front end so we can create our publish locations
+		 */
+		$sampleList = CollectionType::getByHandle('bs_sample_list');
+		if (!is_object($sampleList)) {
+			$data = array(
+				'ctHandle' => 'bs_sample_list',
+				'ctName' => t('Sample Pages List'));
+			$sampleList = CollectionType::add($data, $pkg);
+			$sampleListMT = $sampleList->getMasterTemplate();
+		}
 		
+		/* We'll also want to add a page list with our custom template to the
+		 * master collection so that people don't have to set this up themselves
+		 */
+		
+		$plBT = BlockType::getByHandle("bs_sample_pages_list");
+		$data = array();
+		$data['num'] = '10';
+		$data['cParentIDs'] = $sampleListMT->getCollectionID();
+		$data['includeAllDescendents'] = false;
+		$data['paginate'] = '1';
+		$data['rss'] = '1';
+		$data['rssTitle'] = t("Sample Pages RSS Feed");
+		$data['rssDescription'] = t("The latest sample pages from %s", SITE);
+		$data['ctID'] = $sampleCT->getCollectionTypeID();
+		$data['orderBy'] = 'chrono_desc';
+		
+		$samplePageList = $sampleListMT->addBlock($plBT, "Main", $data);
+		
+		$samplePageList->setCustomTemplate("sample_pages");
+	}
+
+	private function installPages($pkg) {
+
 		$pkgID = $pkg->getPackageID();
 
 		/* We only need to do this if we are installing a custom editor.
@@ -109,8 +207,8 @@ class BestSuiteExpansionKitPackage extends Package {
 		$writeSP = CollectionType::getByHandle('bs_write_sample_page');
 
 		$data = array(
-		    'cHandle' => "write-sample",
-		    'cName' => t("Write a Sample Page"));
+			'cHandle' => "write-sample",
+			'cName' => t("Write a Sample Page"));
 		$writeSP = $composer->add($writeSP, $data);
 
 		$exNav = CollectionAttributeKey::getByHandle('exclude_nav');
@@ -127,7 +225,7 @@ class BestSuiteExpansionKitPackage extends Package {
 		if ($exPL && is_a($exPL, "CollectionAttributeKey")) {
 			$writeSP->setAttribute('exclude_page_list', 1);
 		}
-		
+
 		$icon = CollectionAttributeKey::getByHandle('icon_dashboard');
 		if ($icon && is_a($icon, "CollectionAttributeKey")) {
 			$writeSP->setAttribute('icon_dashboard', 'icon-pencil');
@@ -138,20 +236,28 @@ class BestSuiteExpansionKitPackage extends Package {
 		$pageManagerCT = CollectionType::getByHandle("dashboard_page_manager");
 
 		$data = array(
-		    'cHandle' => "sample",
-		    'cName' => t("Manage Sample Pages"));
+			'cHandle' => "sample",
+			'cName' => t("Manage Sample Pages"));
 		$samplePageManager = $bestSuiteParent->add($pageManagerCT, $data);
-		
+
 		$samplePageManager->setAttribute("dpm_page_type_handle", "bs_sample");
 		
+		/* And we'll add a list page to the front end to create a publish location */
+		$samplePageList = CollectionType::getByHandle("bs_sample_list");
+		$home = Page::getByID(HOME_CID);
+		$data = array(
+			'cHandle' => "sample-pages",
+			'cName' => t("Sample Pages")
+		);
+		$sampleList = $home->add($samplePageList, $data);
 	}
-	
+
 	private function registerWithBestSuiteCore($pkg) {
 		$bscH = Loader::helper("best_suite_core", "dashboard_page_managers");
-		
+
 		$sampleEditPage = Page::getByPath("/dashboard/composer/write-sample")->getCollectionID();
 		$ctID = CollectionType::getByHandle("bs_sample")->getCollectionTypeID();
-		
+
 		/**
 		 * This is where we let the core system know what we need it to do with
 		 * our package. The options are
@@ -168,40 +274,40 @@ class BestSuiteExpansionKitPackage extends Package {
 		 * @customSearchInterfaceFolderName = The container directory that holds
 		 * the search elements. This is relative to package_root/elements/
 		 */
-		
 		$data = array(
-		    "pkgID" => $pkg->getPackageID(),
-		    "ctID" => $ctID,
-		    "hasCustomEditPage" => 1,
-		    "customEditPageCID" => $sampleEditPage,
-		    "hasCustomSearchInterface" => 1,
-		    "customSearchInterfaceFolderName" => "bs_expansion_kit"
+			"pkgID" => $pkg->getPackageID(),
+			"ctID" => $ctID,
+			"hasCustomEditPage" => 1,
+			"customEditPageCID" => $sampleEditPage,
+			"hasCustomSearchInterface" => 1,
+			"customSearchInterfaceFolderName" => "bs_expansion_kit"
 		);
 		$bscH->registerCollectionTypeDetails($data);
 	}
 
 	private function setupComposer($pkg) {
-		
+
+		$sampePageListCT = CollectionType::getByHandle("bs_sample_list");
 		$niSample = CollectionType::getByHandle("bs_sample");
 		$niMC = $niSample->getMasterTemplate();
-		
+
 		/*
 		 * There are three options for publishing location. 
 		 * 
 		 * First, this will let the page be published anywhere
 		 */
-		$niSample->saveComposerPublishTargetAll();
+//		$niSample->saveComposerPublishTargetAll();
 		/*
 		 * Now published under pages of a certain type. 
 		 * Pass in the CollectionType, not just the ID
 		 */
-//		$niSample->saveComposerPublishTargetPageType($ct);
+		$niSample->saveComposerPublishTargetPageType($sampePageListCT);
 		/*
 		 * Use this if you only want to publish under one particular page
 		 * Pass in the full Page object, not just the ID
 		 */
 //		$niSample->saveComposerPublishTargetPage($c);
-		
+
 		/*
 		 * These are the attributes that will be editable in your application.
 		 * If you have custom attributes then you can set them up here as well.
@@ -211,11 +317,17 @@ class BestSuiteExpansionKitPackage extends Package {
 		 * For this sample, we're just using one that's installed with the core
 		 */
 		$sampleAtts = array();
-		$metaKeywords = CollectionAttributeKey::getByHandle("meta_keywords");
-		if ($metaKeywords && is_a($metaKeywords, "CollectionAttributeKey")){
-			$sampleAtts[] = $metaKeywordsID = $metaKeywords->getAttributeKeyID();
+		
+		$sampleCategory = CollectionAttributeKey::getByHandle("bs_sample_category");
+		if ($sampleCategory && is_a($sampleCategory, "CollectionAttributeKey")) {
+			$sampleAtts[] = $sampleCategoryAKID = $sampleCategory->getAttributeKeyID();
 		}
 		
+		$sampleThumbnail = CollectionAttributeKey::getByHandle("bs_sample_thumbnail");
+		if ($sampleThumbnail && is_a($sampleThumbnail, "CollectionAttributeKey")) {
+			$sampleAtts[] = $sampleThumbnailAKID = $sampleThumbnail->getAttributeKeyID();
+		}
+
 		// Now they're added to composer
 		$niSample->saveComposerAttributeKeys($sampleAtts);
 
@@ -224,7 +336,7 @@ class BestSuiteExpansionKitPackage extends Package {
 		$bt = BlockType::getByHandle('content');
 		$data = array('content' => "");
 		$sampleText = $niMC->addBlock($bt, 'Main', $data);
-		
+
 		/*
 		 * And now the composer data. These will be passed in to the block's
 		 * updateBlockInformation function, as well.
@@ -241,10 +353,10 @@ class BestSuiteExpansionKitPackage extends Package {
 		 * @cbFilename = The name that will appear in composer
 		 */
 		$composerData = array(
-		    "bName" => "",
-		    "bFileName" => "Sample Text",
-		    "bIncludeInComposer" => 1,
-		    "cbFilename" => t("Sample Text")
+			"bName" => "",
+			"bFileName" => "Sample Text",
+			"bIncludeInComposer" => 1,
+			"cbFilename" => t("Sample Text")
 		);
 		$sampleText->updateBlockComposerSettings($composerData);
 
@@ -262,15 +374,18 @@ class BestSuiteExpansionKitPackage extends Package {
 		$composerItems = array();
 
 		$obj = new stdClass();
-		$obj->akID = $metaKeywordsID;
-		$composerItems[] = $obj;
-
-		$obj = new stdClass();
 		$obj->bID = $sampleText->getBlockID();
+		$composerItems[] = $obj;
+		
+		$obj = new stdClass();
+		$obj->akID = $sampleThumbnailAKID;
+		$composerItems[] = $obj;
+		
+		$obj = new stdClass();
+		$obj->akID = $sampleCategoryAKID;
 		$composerItems[] = $obj;
 
 		$niSample->saveComposerContentItemOrder($composerItems);
-		
 	}
 
 }

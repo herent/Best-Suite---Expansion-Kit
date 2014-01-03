@@ -28,7 +28,7 @@ $searchFields = array(
 );
 
 if (!$searchDialog) {
-	$searchFields['parent'] = t('Parent Page');
+	$searchFields['parent'] = t('Sample Pages Section');
 }
 
 Loader::model('attribute/categories/collection');
@@ -163,8 +163,8 @@ if (count($composerSearchFieldAttributes)>0){
 		<input type="hidden" name="searchInstance" value="<?php   echo $searchInstance ?>" />
 		<input type="hidden" name="ctID" value="<?php   echo $ctID ?>" />
 		<?php  
-		print $form->hidden('ccm_order_dir', $searchRequest['ccm_order_dir']);
-		print $form->hidden('ccm_order_by', $searchRequest['ccm_order_by']);
+		print $form->hidden('ccm_order_dir', strlen($searchRequest['ccm_order_dir']) > 0 ? $searchRequest['ccm_order_dir'] : "desc");
+		print $form->hidden('ccm_order_by', strlen($searchRequest['ccm_order_by']) > 0 ? $searchRequest['ccm_order_by'] : "cvDateAdded");
 		if ($searchDialog) {
 			print $form->hidden('searchDialog', true);
 		}

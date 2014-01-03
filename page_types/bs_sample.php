@@ -26,6 +26,23 @@ $c = Page::getCurrentPage();
 		$a = new Area('Main');
 		$a->display($c);
 		?>
+		<div cass="categories">
+			<?php 
+			$categories = $c->getAttribute('bs_sample_category');
+			if ($categories && $categories->count()>0){
+				echo t("Categories") . " : ";
+				$first = true;
+				foreach($categories as $cat){
+					if (!$first){
+						echo ", ";
+					} else {
+						$first = false;
+					}
+					echo ucwords($cat->getSelectAttributeOptionValue());
+				}
+			}
+			?>
+		</div>
 	</div>
 </div>
 
