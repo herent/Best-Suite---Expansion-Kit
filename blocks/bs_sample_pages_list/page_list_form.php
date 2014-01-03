@@ -21,6 +21,7 @@ $fh = Loader::helper("form");
 			<?php echo t('Display') ?>
 			<input type="text" name="num" value="<?php echo $num ?>" style="width: 30px">
 			<?php
+			echo t("Sample Pages");
 			$ct = CollectionType::getByHandle("bs_sample");
 			echo $fh->hidden("ctID", $ct->getCollectionTypeID());
 			?>
