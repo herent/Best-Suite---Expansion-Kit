@@ -14,26 +14,53 @@ class BsSamplePageTypeController extends Controller {
 		 * uncomment the stuff below. You do have to hard code the link back to
 		 * the listing interface, so be careful about updating that.
 		 */
-
-		/*
-		  $c = Page::getCurrentPage();
-		  $myCT = CollectionType::getByHandle($c->getCollectionTypeHandle());
-		  if ($myCT->isCollectionTypeInternal()){
-		  if ($c->isMasterCollection()) {
-		  ob_start();?>
-		  <script type="text/javascript">
-		  $(document).ready(function() {
-		  $("#ccm-main-nav a.ccm-icon-back")
-		  .attr("href", "<?php echo View::url('/dashboard/best_suite/sample') ?>")
-		  .text("<?php echo t("Back to Sample"); ?>");
-		  });
-		  </script>
-		  <?php
-		  $changeHeaderScript = ob_get_clean();
-		  $this->addFooterItem($changeHeaderScript);
-		  }
-		  }
-		 */
+		$c = Page::getCurrentPage();
+		$myCT = CollectionType::getByHandle($c->getCollectionTypeHandle());
+		if ($myCT->isCollectionTypeInternal()) {
+			if ($c->isMasterCollection()) {
+				ob_start();
+				?>
+				<script type="text/javascript">
+					$(document).ready(function() {
+						$("#ccm-main-nav a.ccm-icon-back")
+							   .attr("href", "<?php echo View::url('/dashboard/best_suite/sample') ?>")
+							   .text("<?php echo t("Back to Sample"); ?>");
+					});
+				</script>
+				<?php
+				$changeHeaderScript = ob_get_clean();
+				$this->addFooterItem($changeHeaderScript);
+			} else {
+				$c = Page::getCurrentPage();
+				$cp = new Permissions($c);
+				if ($cp->canViewToolbar()){
+					$ct = CollectionType::getByHandle("bs_sample");
+					$ctID = $ct->getCollectionTypeID();
+					$bscHelper = Loader::helper('best_suite_core', 'dashboard_page_managers');
+					$customCollectionOptions = $bscHelper->getCollectionTypeDetails($ctID);
+					$managerCID = Page::getByPath("/dashboard/best_suite/sample")->getCollectionID();
+					if ($customCollectionOptions && $customCollectionOptions->hasCustomEditPage) {
+						$writePagePath = Page::getByID($customCollectionOptions->customEditPageCID)->getCollectionPath();
+						$editAction = View::url($writePagePath, 'edit', $this->c->getCollectionID(), 0, $managerCID);
+					} else {
+						$editAction = View::url('/dashboard/composer/write-pm', 'edit', $this->c->getCollectionID(), 0, $managerCID);
+					}
+					ob_start();
+					?>
+					<script type="text/javascript">
+						$(document).ready(function() {
+							$("#ccm-main-nav li:not(#ccm-logo-wrapper) a.ccm-icon-edit.ccm-menu-icon")
+								   .attr("id", "link-to-composer")
+								   .attr("href", "<?php echo $editAction;?>")
+								   .text("<?php echo t("Edit In Page Manager");?>");
+						});
+					</script>
+					<?php
+					$changeHeaderScript = ob_get_clean();
+					$this->addFooterItem($changeHeaderScript);
+				}
+			}
+		}
 	}
 
 	/*
