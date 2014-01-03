@@ -2,7 +2,7 @@
 defined('C5_EXECUTE') or die("Access Denied.");
 $rssUrl = $showRss ? $controller->getRssUrl($b) : '';
 $th = Loader::helper('text');
-//$ih = Loader::helper('image'); //<--uncomment this line if displaying image attributes (see below)
+$ih = Loader::helper('image'); //<--uncomment this line if displaying image attributes (see below)
 //$dh = Loader::helper('date'); //<--uncomment this line if displaying dates (see below)
 //Note that $nh (navigation helper) is already loaded for us by the controller (for legacy reasons)
 ?>
@@ -19,6 +19,8 @@ $th = Loader::helper('text');
 		$description = $page->getCollectionDescription();
 		$description = $controller->truncateSummaries ? $th->shorten($description, $controller->truncateChars) : $description;
 		$description = $th->entities($description);	
+		$thumb = $page->getAttribute('bs_sample_thumbnail');
+		
 		
 		//Other useful page data...
 		
@@ -53,13 +55,20 @@ $th = Loader::helper('text');
 		/* End data preparation. */
 
 		/* The HTML from here through "endforeach" is repeated for every item in the list... */ ?>
+	<article class="sample-item">
+		<?php 
+		if ($thumb && is_a($thumb, "File")){?>
+		<div class="thumbnail-wrap">
+			<?php $ih->outputThumbnail($thumb, 200, 200, $title, false, true);?>
+		</div>
+		<?php } ?>
 		<h3 class="ccm-page-list-title">
 			<a href="<?php  echo $url ?>" target="<?php  echo $target ?>"><?php  echo $title ?></a>
 		</h3>
 		<div class="ccm-page-list-description">
 			<?php  echo $description ?>
 		</div>
-		
+	</article>
 	<?php  endforeach; ?>
  
 

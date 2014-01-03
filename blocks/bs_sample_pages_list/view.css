@@ -1,1 +1,25 @@
-div.ccm-page-list-rss-icon {margin-top: 10px}
+.thumbnail-wrap {
+	float: left;
+	margin: 0 10px 10px 0;
+}
+article.sample-item {
+	overflow: hidden;
+	margin-bottom: 20px;
+	padding-bottom: 10px;
+	border-bottom: 2px solid #ccc;
+}
+article.sample-item:last-of-type {
+	border-bottom: none;
+}
+
+article.sample-item:before,
+article.sample-item:after{
+     content: " "; /* 1 */
+     display: table; /* 2 */
+}
+article.sample-item:after{
+     clear: both;
+}
+.ccm-page-list-description {
+	margin-bottom: 10px;
+}

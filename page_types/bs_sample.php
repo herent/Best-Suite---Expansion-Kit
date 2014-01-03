@@ -26,7 +26,7 @@ $c = Page::getCurrentPage();
 		$a = new Area('Main');
 		$a->display($c);
 		?>
-		<div cass="categories">
+		<div class="categories" style="margin-bottom: 50px;">
 			<?php 
 			$categories = $c->getAttribute('bs_sample_category');
 			if ($categories && $categories->count()>0){
