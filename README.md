@@ -77,8 +77,28 @@ This example shows a few more options.
 TODO List
 =========
 
-* Show more examples of how custom search interfaces can be used. 
+* Show more examples of how custom search interfaces can be used. Right now, it
+	really just shows how to include files from your package, but it would be 
+	good to show how to create new forms that match the application better, and
+	add new buttons that do things to the pages in the results view
+* Update the core to have a permissions category to allow people to specify what
+	users and groups can access the managers. Then show examples of how to set
+	that up in the package install
+* Possibly a real-world example (FAQ or something) to make it a little clearer how
+	this package is supposed to be used. But since this is primarily aimed at 
+	developers that know how to program in concrete5, that's a bit lower priority
+* Continue to expand the documentation and comments to make things even clearer
 
+Contributing
+============
+
+If you would like to contribute to this project, feel free to fork and submit pull
+requests on github. The core system will not be publicly available there, but can
+be opened up to select people that need to modify the core in order to get some
+extensions to work. 
+
+There are probably a lot of ways that this system could be improved, it seems like 
+the best programs are created out of the work of multiple people and not just one.
 
 Credits
 =======

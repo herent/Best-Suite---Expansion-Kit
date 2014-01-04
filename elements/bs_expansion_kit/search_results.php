@@ -58,6 +58,7 @@ $advancedEnabled = PERMISSIONS_MODEL === "advanced" ? 1 : 0;
 	<?php    if (!$searchDialog) { ?>
 	<div class="ccm-pane-body">
 	<?php   } ?>
+		<h4><?php echo t("These are custom search results!");?></h4>
 		<div id="ccm-list-wrapper">
 			<a name="ccm-<?php   echo $searchInstance?>-list-wrapper-anchor"></a>
 			<div style="margin-bottom: 20px">

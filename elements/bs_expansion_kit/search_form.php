@@ -136,6 +136,7 @@ if (count($composerSearchFieldAttributes)>0){
 	}
 } ?>
 </div>
+<h4><?php echo t("This is a custom edit form!");?></h4>
 <?php   if (!$redirect) { ?>
 
 	<form 
