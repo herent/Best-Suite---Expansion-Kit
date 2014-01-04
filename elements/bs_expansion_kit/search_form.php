@@ -8,13 +8,7 @@ $ctID = $ct->getCollectionTypeID();
 $customCollectionOptions = $bscHelper->getCollectionTypeDetails($ctID);
 
 if (!$redirect) {
-	if ($customCollectionOptions && $customCollectionOptions->hasCustomSearchInterface){
-		$searchFolderName = $customCollectionOptions->customSearchInterfaceFolderName;
-		$pkgHandle = Package::getByID($customCollectionOptions->pkgID)->getPackageHandle();
-		$urlSearchAction = $url->getToolsURL($searchFolderName . '/search_results', $pkgHandle);
-	} else {
-		$urlSearchAction = $url->getToolsURL('dashboard_page_managers/search_results', 'dashboard_page_managers');
-	}
+	$urlSearchAction = $url->getToolsURL('dashboard_page_managers/search_results', 'dashboard_page_managers');
 } else {
 	$urlSearchAction = View::url(Page::getByID($cID)->getCollectionPath());
 }
