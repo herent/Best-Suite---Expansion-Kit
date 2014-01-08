@@ -1,3 +1,6 @@
+0.0.3
+	Removed option to keep page types internal because of the way that permissions
+	work for "addSubPage" - if it's internal that always returns false
 0.0.2
 	Update to package installation check
 	Fixed a couple bugs in the composer setup
