@@ -20,9 +20,6 @@ Subjects Covered
 ----------------
 ### Package Controller
 
-* Options for keeping page types internal on installation, so that you can prevent
-	people from using the front-end to add pages. This doesn't prevent them from 
-	actually being able to edit the page on the front end, though.
 * How to verify that the core system is installed
 * Creating a new editing page rather than the one from th core for complete control over
 	the form's layout
