@@ -16,7 +16,7 @@ class BestSuiteExpansionKitPackage extends Package {
 		return t("Best Suite - Expansion Kit");
 	}
 
-	public function install($installData = array()) {
+	public function install() {
 
 		$haveDPM = 0;
 		$dpmUpToDate = 0;
@@ -36,7 +36,7 @@ class BestSuiteExpansionKitPackage extends Package {
 		if ($haveDPM && $dpmUpToDate) {
 			// We're good to go
 			$pkg = parent::install();
-			$this->installPageTypes($pkg, $installData['keepInternal']);
+			$this->installPageTypes($pkg);
 			$this->installPages($pkg);
 			$this->setupComposer($pkg);
 			$this->registerWithBestSuiteCore($pkg);
@@ -68,7 +68,7 @@ class BestSuiteExpansionKitPackage extends Package {
 	/**
 	 * @var $pkg Package
 	 * @var $keepInternal bool */
-	private function installPageTypes($pkg, $keepInternal = 0) {
+	private function installPageTypes($pkg) {
 
 		/*
 		 *  We always want to keep the page for writing internal no matter
@@ -92,8 +92,7 @@ class BestSuiteExpansionKitPackage extends Package {
 		if (!is_object($sample)) {
 			$data = array(
 				'ctHandle' => 'bs_sample',
-				'ctName' => t('Sample'),
-				'ctIsInternal' => $keepInternal);
+				'ctName' => t('Sample'));
 			$sample = CollectionType::add($data, $pkg);
 		}
 	}
