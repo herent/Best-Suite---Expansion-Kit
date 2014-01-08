@@ -6,7 +6,7 @@ class BestSuiteExpansionKitPackage extends Package {
 
 	protected $pkgHandle = 'best_suite_expansion_kit';
 	protected $appVersionRequired = '5.6.1.2';
-	protected $pkgVersion = '0.0.2';
+	protected $pkgVersion = '0.0.3';
 
 	public function getPackageDescription() {
 		return t("Learn to create applications that utilize Best Suite : Core");
@@ -16,7 +16,7 @@ class BestSuiteExpansionKitPackage extends Package {
 		return t("Best Suite - Expansion Kit");
 	}
 
-	public function install($installData = array()) {
+	public function install() {
 
 		$haveDPM = 0;
 		$dpmUpToDate = 0;
@@ -38,7 +38,7 @@ class BestSuiteExpansionKitPackage extends Package {
 			$pkg = parent::install();
 			$this->installBlocks($pkg);
 			$this->installPageAttributes($pkg);
-			$this->installPageTypes($pkg, $installData['keepInternal']);
+			$this->installPageTypes($pkg);
 			$this->installPages($pkg);
 			$this->setupComposer($pkg);
 			$this->registerWithBestSuiteCore($pkg);
@@ -156,8 +156,7 @@ class BestSuiteExpansionKitPackage extends Package {
 		if (!is_object($sampleCT)) {
 			$data = array(
 				'ctHandle' => 'bs_sample',
-				'ctName' => t('Sample'),
-				'ctIsInternal' => $keepInternal);
+				'ctName' => t('Sample'));
 			$sampleCT = CollectionType::add($data, $pkg);
 		}
 		CacheLocal::flush();
