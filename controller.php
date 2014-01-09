@@ -61,6 +61,11 @@ class BestSuiteExpansionKitPackage extends Package {
 		if ($sampleManager && is_a($sampleManager, "Page")){
 			$sampleManager->delete();
 		}
+		$sampleManager = Page::getByPath("/dashboard/composer/write-sample");
+		if ($sampleManager && is_a($sampleManager, "Page")){
+			$sampleManager->delete();
+		}
+		
 		parent::uninstall();
 	}
 	
