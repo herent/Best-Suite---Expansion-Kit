@@ -56,9 +56,8 @@ class BestSuiteExpansionKitPackage extends Package {
 	}
 	
 	public function uninstall(){
-		$pkgID = $this->getPackageID();
-		$db = Loader::db();
-		$db->execute("DELETE FROM BestSuiteInstalledPackages WHERE pkgID = ?", array($pkgID));
+		$bscHelper = Loader::helper("best_suite_core", "best_suite_core");
+		$bscHelper->removePackage($this->getPackageID());
 		$sampleManager = Page::getByPath("/dashboard/best_suite/sample");
 		if ($sampleManager && is_a($sampleManager, "Page")){
 			$sampleManager->delete();
