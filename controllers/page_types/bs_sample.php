@@ -7,15 +7,16 @@ class BsSamplePageTypeController extends Controller {
 	public function on_start() {
 
 		/*
-		 * If you do not really want people to be able to edit these pages
-		 * outside of the page manager, then uncomment these sections
+		 * These will allow you to adjust the edit bar, or remove it. If you 
+		 * would like to leave the default editing functions in place, then 
+		 * remove or comment out this stuff
 		 */
 		
 		/*
 		 * This will overwrite the edit button so that the dropdown doesn't 
 		 * show, and then change it so that when clicked on, it will send you 
 		 * to the dashboard manager. 
-		 *
+		 */
 		$c = Page::getCurrentPage();
 		$myCT = CollectionType::getByHandle($c->getCollectionTypeHandle());
 		if (!$c->isMasterCollection()) {
@@ -48,7 +49,6 @@ class BsSamplePageTypeController extends Controller {
 				$this->addFooterItem($changeHeaderScript);
 			}
 		}
-		 */
 		
 		/*
 		 * And this one will completely remove the whole edit bar. If needed
