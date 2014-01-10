@@ -7,52 +7,67 @@ class BsSamplePageTypeController extends Controller {
 	public function on_start() {
 
 		/*
-		 * If we have kept our page type hidden, the only way to actually edit
-		 * the master template is by linking from the search / list page. That 
-		 * will show a "Back To Page Types" link when editing, instead of a 
-		 * link back to the manager. If you would like it to link to the manager,
-		 * uncomment the stuff below. You do have to hard code the link back to
-		 * the listing interface, so be careful about updating that.
+		 * If you do not really want people to be able to edit these pages
+		 * outside of the page manager, then uncomment these sections
 		 */
+		
+		/*
+		 * This will overwrite the edit button so that the dropdown doesn't 
+		 * show, and then change it so that when clicked on, it will send you 
+		 * to the dashboard manager. 
+		 *
 		$c = Page::getCurrentPage();
 		$myCT = CollectionType::getByHandle($c->getCollectionTypeHandle());
-		if ($myCT->isCollectionTypeInternal()) {
-			if ($c->isMasterCollection()) {
+		if (!$c->isMasterCollection()) {
+			$c = Page::getCurrentPage();
+			$cp = new Permissions($c);
+			if ($cp->canViewToolbar()){
+				$ct = CollectionType::getByHandle("bs_sample");
+				$ctID = $ct->getCollectionTypeID();
+				$bscHelper = Loader::helper('best_suite_core', 'dashboard_page_managers');
+				$customCollectionOptions = $bscHelper->getCollectionTypeDetails($ctID);
+				$managerCID = Page::getByPath("/dashboard/best_suite/sample")->getCollectionID();
+				if ($customCollectionOptions && $customCollectionOptions->hasCustomEditPage) {
+					$writePagePath = Page::getByID($customCollectionOptions->customEditPageCID)->getCollectionPath();
+					$editAction = View::url($writePagePath, 'edit', $this->c->getCollectionID(), 0, $managerCID);
+				} else {
+					$editAction = View::url('/dashboard/composer/write-pm', 'edit', $this->c->getCollectionID(), 0, $managerCID);
+				}
 				ob_start();
 				?>
 				<script type="text/javascript">
 					$(document).ready(function() {
-						$("#ccm-main-nav a.ccm-icon-back")
-							   .attr("href", "<?php echo View::url('/dashboard/best_suite/sample') ?>")
-							   .text("<?php echo t("Back to Sample"); ?>");
+						$("#ccm-main-nav li:not(#ccm-logo-wrapper) a.ccm-icon-edit.ccm-menu-icon")
+							   .attr("id", "link-to-composer")
+							   .attr("href", "<?php echo $editAction;?>")
+							   .text("<?php echo t("Edit In Page Manager");?>");
 					});
 				</script>
 				<?php
 				$changeHeaderScript = ob_get_clean();
 				$this->addFooterItem($changeHeaderScript);
-			} else {
+			}
+		}
+		 */
+		
+		/*
+		 * And this one will completely remove the whole edit bar. If needed
+		 * you might want to check if a user is or isn't in particular group 
+		 * before doing this, but it's not 100% necessary.
+		 *
+		$g = Group::getByName("Administrators");
+		$u = new User();
+		if ($g && is_a($g, "Group") && !$u->inGroup($g)){
+			$c = Page::getCurrentPage();
+			if (!$c->isMasterCollection()) {
 				$c = Page::getCurrentPage();
 				$cp = new Permissions($c);
 				if ($cp->canViewToolbar()){
-					$ct = CollectionType::getByHandle("bs_sample");
-					$ctID = $ct->getCollectionTypeID();
-					$bscHelper = Loader::helper('best_suite_core', 'dashboard_page_managers');
-					$customCollectionOptions = $bscHelper->getCollectionTypeDetails($ctID);
-					$managerCID = Page::getByPath("/dashboard/best_suite/sample")->getCollectionID();
-					if ($customCollectionOptions && $customCollectionOptions->hasCustomEditPage) {
-						$writePagePath = Page::getByID($customCollectionOptions->customEditPageCID)->getCollectionPath();
-						$editAction = View::url($writePagePath, 'edit', $this->c->getCollectionID(), 0, $managerCID);
-					} else {
-						$editAction = View::url('/dashboard/composer/write-pm', 'edit', $this->c->getCollectionID(), 0, $managerCID);
-					}
 					ob_start();
 					?>
 					<script type="text/javascript">
 						$(document).ready(function() {
-							$("#ccm-main-nav li:not(#ccm-logo-wrapper) a.ccm-icon-edit.ccm-menu-icon")
-								   .attr("id", "link-to-composer")
-								   .attr("href", "<?php echo $editAction;?>")
-								   .text("<?php echo t("Edit In Page Manager");?>");
+							$("#ccm-main-nav").remove();
 						});
 					</script>
 					<?php
@@ -61,6 +76,7 @@ class BsSamplePageTypeController extends Controller {
 				}
 			}
 		}
+		 */
 	}
 
 	/*
