@@ -6,7 +6,7 @@ class BestSuiteExpansionKitPackage extends Package {
 
 	protected $pkgHandle = 'best_suite_expansion_kit';
 	protected $appVersionRequired = '5.6.1.2';
-	protected $pkgVersion = '0.0.3';
+	protected $pkgVersion = '0.0.4';
 
 	public function getPackageDescription() {
 		return t("Learn to create applications that utilize Best Suite : Core");
@@ -56,7 +56,7 @@ class BestSuiteExpansionKitPackage extends Package {
 	}
 	
 	public function uninstall(){
-		$bscHelper = Loader::helper("best_suite_core", "best_suite_core");
+		$bscHelper = Loader::helper("best_suite_core", "dashboard_page_managers");
 		$bscHelper->removePackage($this->getPackageID());
 		$sampleManager = Page::getByPath("/dashboard/best_suite/sample");
 		if ($sampleManager && is_a($sampleManager, "Page")){
