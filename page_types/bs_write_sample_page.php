@@ -284,6 +284,10 @@ if (isset($entry)) {
 					height: '400'
 				});
 			}
+			
+			function forwardAfterDraft() {
+				window.location = $("#ccm-submit-save").attr('href');
+			}
 
 			$(function() {
 				<?php if (is_object($v) && $v->isApproved()) { ?>
@@ -305,8 +309,10 @@ if (isset($entry)) {
 						return (confirm('<?php echo t("Discard this draft?") ?>'));
 					});
 				<?php } ?>
-				$("#ccm-submit-publish").click(function() {
-					$('input[name=ccm-publish-draft]').val(1);
+				("#ccm-submit-save").click(function() {
+					ccm_composerDoAutoSaveAllowed = true;
+					ccm_composerDoAutoSave(forwardAfterDraft);
+					return false;
 				});
 
 				$("#ccm-submit-save").click(function() {

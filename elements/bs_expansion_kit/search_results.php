@@ -100,17 +100,9 @@ $advancedEnabled = PERMISSIONS_MODEL === "advanced" ? 1 : 0;
 			$soargs['sitemap_select_callback'] = $sitemap_select_callback;
 			$soargs['searchDialog'] = $searchDialog;
 			$soargs['cID'] = $cID;
-			if ($customCollectionOptions && $customCollectionOptions->hasCustomSearchInterface) {
-				$searchFolderName = $customCollectionOptions->customSearchInterfaceFolderName;
-				$pkgHandle = Package::getByID($customCollectionOptions->pkgID)->getPackageHandle();
-				$bu = $url->getToolsURL(
-					$searchFolderName . '/search_results', 
-					$pkgHandle) . "?cID=" . $cID;
-			} else {
-				$bu = $url->getToolsURL(
-					'dashboard_page_managers/search_results', 
-					'dashboard_page_managers') . "?cID=" . $cID;
-			}
+			$bu = $url->getToolsURL(
+				'dashboard_page_managers/search_results', 
+				'dashboard_page_managers') . "?cID=" . $cID;
 			if (count($pages) > 0) {
 				$nh = Loader::helper('navigation');
 				$deleteURL = Page::getByID($cID)->getCollectionPath();
