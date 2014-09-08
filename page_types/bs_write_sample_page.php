@@ -309,7 +309,7 @@ if (isset($entry)) {
 						return (confirm('<?php echo t("Discard this draft?") ?>'));
 					});
 				<?php } ?>
-				("#ccm-submit-save").click(function() {
+				$("#ccm-submit-save").click(function() {
 					ccm_composerDoAutoSaveAllowed = true;
 					ccm_composerDoAutoSave(forwardAfterDraft);
 					return false;

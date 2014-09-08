@@ -6,7 +6,7 @@ class BestSuiteExpansionKitPackage extends Package {
 
 	protected $pkgHandle = 'best_suite_expansion_kit';
 	protected $appVersionRequired = '5.6.1.2';
-	protected $pkgVersion = '0.0.6';
+	protected $pkgVersion = '0.0.7';
 
 	public function getPackageDescription() {
 		return t("Learn to create applications that utilize Best Suite : Core");
